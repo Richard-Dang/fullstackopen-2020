@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
-import axios from "axios";
+import personService from "./services/persons";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -11,8 +11,8 @@ const App = () => {
   const [term, setTerm] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
+    personService.getAllPersons().then((persons) => {
+      setPersons(persons);
     });
   }, []);
 
@@ -35,16 +35,54 @@ const App = () => {
     setTerm(term);
   };
 
+  const handleDelete = ({ name, id }) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      personService
+        .deletePerson(id)
+        .then(() => {
+          setPersons(persons.filter((p) => p.id !== id));
+        })
+        .catch((err) => alert(`${name} was already deleted`));
+    }
+  };
+
+  const updatePhone = (person, newNumber) => {
+    if (
+      window.confirm(
+        `${person.name} is already added to phonebook, replace the old number with a new one?`
+      )
+    ) {
+      const updatedPerson = { ...person, number: newNumber };
+      personService
+        .updatePerson(updatedPerson)
+        .then((returnedPerson) => {
+          setPersons(
+            persons.map((p) =>
+              p.id === returnedPerson.id ? returnedPerson : p
+            )
+          );
+          setNewName("");
+          setNewNumber("");
+        })
+        .catch((err) => {
+          alert(`${person.name} was already deleted from server`);
+          setPersons(persons.filter((p) => p.id !== person.id));
+        });
+    }
+  };
+
   const addPerson = (event) => {
     event.preventDefault();
-    const newPerson = { name: newName, number: newNumber };
-
-    if (persons.filter((person) => person.name === newName).length > 0) {
-      alert(`${newName} is already added to phonebook}`);
+    const existingPerson = persons.find((p) => p.name === newName);
+    if (existingPerson) {
+      updatePhone(existingPerson, newNumber);
     } else {
-      setPersons(persons.concat(newPerson));
-      setNewName("");
-      setNewNumber("");
+      const newPerson = { name: newName, number: newNumber };
+      personService.createPerson(newPerson).then((person) => {
+        setPersons(persons.concat(person));
+        setNewName("");
+        setNewNumber("");
+      });
     }
   };
 
@@ -61,7 +99,7 @@ const App = () => {
         handleNewNumber={handleNewNumber}
       />
       <h2>Numbers</h2>
-      <Persons filteredPersons={filteredPersons} />
+      <Persons filteredPersons={filteredPersons} handleDelete={handleDelete} />
     </div>
   );
 };
