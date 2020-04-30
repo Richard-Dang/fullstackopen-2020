@@ -1,0 +1,20 @@
+import React from "react";
+
+function Notification({ message: { text, type } }) {
+  const notificationStyle = {
+    background: "lightgrey",
+    fontSize: 20,
+    borderStyle: "solid",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  };
+
+  const typeStyle = type === "error" ? { color: "red" } : { color: "green" };
+
+  return text ? (
+    <div style={{ ...notificationStyle, ...typeStyle }}>{text}</div>
+  ) : null;
+}
+
+export default Notification;

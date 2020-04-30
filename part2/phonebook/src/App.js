@@ -3,12 +3,14 @@ import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
 import personService from "./services/persons";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [term, setTerm] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
 
   useEffect(() => {
     personService.getAllPersons().then((persons) => {
@@ -21,6 +23,16 @@ const App = () => {
         person.name.toLowerCase().includes(term.toLowerCase())
       )
     : persons;
+
+  const showMessage = (text, type) => {
+    setMessage({
+      text,
+      type,
+    });
+    setTimeout(() => {
+      setMessage({ text: "", type: "" });
+    }, 5000);
+  };
 
   const handleNewName = (event) => {
     setNewName(event.target.value);
@@ -42,7 +54,9 @@ const App = () => {
         .then(() => {
           setPersons(persons.filter((p) => p.id !== id));
         })
-        .catch((err) => alert(`${name} was already deleted`));
+        .catch((err) => {
+          showMessage(`${name} was already deleted`, "error");
+        });
     }
   };
 
@@ -63,10 +77,14 @@ const App = () => {
           );
           setNewName("");
           setNewNumber("");
+          showMessage(`Updated number for ${person.name}`, "success");
         })
         .catch((err) => {
-          alert(`${person.name} was already deleted from server`);
           setPersons(persons.filter((p) => p.id !== person.id));
+          showMessage(
+            `${person.name} was already deleted from server`,
+            "error"
+          );
         });
     }
   };
@@ -82,6 +100,7 @@ const App = () => {
         setPersons(persons.concat(person));
         setNewName("");
         setNewNumber("");
+        showMessage(`Added ${person.name}`, "success");
       });
     }
   };
@@ -89,6 +108,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} />
       <Filter term={term} handleSearch={handleSearch} />
       <h2>add a new</h2>
       <PersonForm
