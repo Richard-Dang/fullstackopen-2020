@@ -29,9 +29,11 @@ const App = () => {
       text,
       type,
     });
-    setTimeout(() => {
-      setMessage({ text: "", type: "" });
-    }, 5000);
+    if (type !== "error") {
+      setTimeout(() => {
+        setMessage({ text: "", type: "" });
+      }, 5000);
+    }
   };
 
   const handleNewName = (event) => {
@@ -96,12 +98,17 @@ const App = () => {
       updatePhone(existingPerson, newNumber);
     } else {
       const newPerson = { name: newName, number: newNumber };
-      personService.createPerson(newPerson).then((person) => {
-        setPersons(persons.concat(person));
-        setNewName("");
-        setNewNumber("");
-        showMessage(`Added ${person.name}`, "success");
-      });
+      personService
+        .createPerson(newPerson)
+        .then((person) => {
+          setPersons(persons.concat(person));
+          setNewName("");
+          setNewNumber("");
+          showMessage(`Added ${person.name}`, "success");
+        })
+        .catch((err) => {
+          showMessage(err.response.data.error, "error");
+        });
     }
   };
 
